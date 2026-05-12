@@ -3,210 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шахматная библиотека | Аналог МЭШ</title>
+    <title>Шахматная библиотека | Синхронизация через WebRTC</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, 'Segoe UI', sans-serif;
-            background: #f0f4f8;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-        }
-        
-        /* Шапка */
+        body { font-family: system-ui, 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; }
         .header {
-            background: white;
-            border-radius: 28px;
-            padding: 20px 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
+            background: white; border-radius: 28px; padding: 20px 28px;
+            margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
         }
-        .header h1 {
-            font-size: 1.8rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .teacher-badge {
-            background: #fef9e3;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-        }
-        
-        /* Категории */
+        .header h1 { font-size: 1.8rem; color: #2c3e50; display: flex; align-items: center; gap: 10px; }
+        .teacher-badge { background: #fef9e3; padding: 8px 16px; border-radius: 40px; font-size: 0.85rem; }
         .categories {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 28px;
-            background: white;
-            padding: 16px 20px;
-            border-radius: 60px;
-            justify-content: center;
+            display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px;
+            background: white; padding: 16px 20px; border-radius: 60px; justify-content: center;
         }
         .cat-btn {
-            background: none;
-            border: none;
-            padding: 10px 28px;
-            border-radius: 40px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            color: #4a5568;
-            transition: 0.2s;
+            background: none; border: none; padding: 10px 28px; border-radius: 40px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; color: #4a5568;
         }
-        .cat-btn.active {
-            background: #2c3e50;
-            color: white;
-        }
-        .cat-btn i { margin-right: 8px; }
-        
-        /* Сетка материалов */
+        .cat-btn.active { background: #2c3e50; color: white; }
         .materials-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px; margin-bottom: 32px;
         }
-        
-        /* Карточка материала */
         .material-card {
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
+            background: white; border-radius: 24px; padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;
             transition: 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
         }
-        .material-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-        }
-        .material-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 12px;
-            color: #2c3e50;
-        }
-        .material-card .preview {
-            color: #4a5568;
-            line-height: 1.5;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-        }
-        .material-card .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 16px;
-        }
-        .tag {
-            background: #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            color: #2c3e50;
-        }
-        .card-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        .card-actions button {
-            background: #eef2f6;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
+        .material-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+        .material-card h3 { font-size: 1.3rem; margin-bottom: 12px; color: #2c3e50; }
+        .preview { color: #4a5568; line-height: 1.5; margin-bottom: 16px; font-size: 0.9rem; }
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+        .tag { background: #e2e8f0; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; }
+        .card-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .card-actions button { background: #eef2f6; border: none; padding: 6px 14px; border-radius: 30px; cursor: pointer; }
         .card-actions button.edit { background: #2c3e50; color: white; }
         .card-actions button.delete { background: #f1dede; color: #c2410c; }
-        
-        /* Модальное окно */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
         }
         .modal-content {
-            background: white;
-            border-radius: 32px;
-            padding: 28px;
-            max-width: 700px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
+            background: white; border-radius: 32px; padding: 28px; max-width: 700px;
+            width: 90%; max-height: 85vh; overflow-y: auto;
         }
-        .modal-content h2 { margin-bottom: 16px; color: #2c3e50; }
-        .modal-content .material-full { white-space: pre-wrap; line-height: 1.6; }
-        .modal-content .chess-preview {
-            background: #f0f4f8;
-            padding: 16px;
-            border-radius: 20px;
-            margin: 16px 0;
-            text-align: center;
-        }
-        
-        /* Форма добавления (для учителя) */
+        .modal-content h2 { margin-bottom: 16px; }
+        .material-full { white-space: pre-wrap; line-height: 1.6; }
+        .chess-preview { background: #f0f4f8; padding: 16px; border-radius: 20px; margin: 16px 0; text-align: center; }
         .teacher-panel {
-            background: #fef9e3;
-            border-radius: 28px;
-            padding: 24px;
-            margin-top: 32px;
+            background: #fef9e3; border-radius: 28px; padding: 24px; margin-top: 32px;
         }
-        .teacher-panel h3 { margin-bottom: 16px; }
         .teacher-panel input, .teacher-panel textarea, .teacher-panel select {
-            width: 100%;
-            max-width: 500px;
-            padding: 10px 16px;
-            border-radius: 30px;
-            border: 1px solid #ccc;
-            margin: 8px 0;
-            font-family: inherit;
+            width: 100%; max-width: 500px; padding: 10px 16px; border-radius: 30px;
+            border: 1px solid #ccc; margin: 8px 0; font-family: inherit;
         }
-        .teacher-panel textarea { border-radius: 20px; }
-        button {
-            background: #2c3e50;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-top: 8px;
-        }
-        button.small { padding: 6px 16px; font-size: 0.8rem; }
-        .empty-state {
-            text-align: center;
-            padding: 48px;
-            color: #6c757d;
-            background: white;
-            border-radius: 28px;
-        }
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: #6c757d;
-            font-size: 0.8rem;
-        }
+        button { background: #2c3e50; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
+        .sync-panel { background: #e0f2fe; padding: 16px; border-radius: 20px; margin-bottom: 20px; }
+        .room-info { font-family: monospace; font-size: 1.2rem; background: #fff; padding: 8px; border-radius: 12px; display: inline-block; }
+        .empty-state { text-align: center; padding: 48px; color: #6c757d; background: white; border-radius: 28px; }
+        footer { text-align: center; margin-top: 40px; padding: 20px; color: #6c757d; font-size: 0.8rem; }
         @media (max-width: 700px) {
             .header { flex-direction: column; text-align: center; }
             .categories { border-radius: 28px; }
@@ -214,86 +74,81 @@
             .materials-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1><i class="fas fa-chess-queen"></i> Шахматная библиотека</h1>
+        <h1><i class="fas fa-chess-queen"></i> Шахматная библиотека (синхр.)</h1>
         <div class="teacher-badge">
-            <i class="fas fa-chalkboard-teacher"></i> 
-            <span id="teacherStatus">Режим просмотра</span>
-            <button id="toggleTeacherBtn" class="small" style="margin-left: 10px; background: #4a5568;">🔐 Войти</button>
+            <i class="fas fa-chalkboard-teacher"></i> <span id="teacherStatus">Режим просмотра</span>
+            <button id="toggleTeacherBtn" style="margin-left: 10px; background: #4a5568;">🔐 Войти</button>
         </div>
     </div>
-    
-    <!-- Категории -->
+
+    <div class="sync-panel" id="syncPanel">
+        <h3>🔄 Синхронизация библиотеки (WebRTC)</h3>
+        <p><strong>Преподаватель:</strong> нажмите «Стать ведущим» и дайте ученикам ID комнаты.</p>
+        <p><strong>Ученики:</strong> введите ID комнаты и нажмите «Подключиться».</p>
+        <button id="becomeHostBtn">👑 Стать ведущим</button>
+        <input type="text" id="roomIdInput" placeholder="ID комнаты" style="width: auto; margin-left: 10px;">
+        <button id="joinRoomBtn">🔗 Подключиться</button>
+        <div id="connectionStatus"></div>
+        <div id="myPeerIdDisplay" style="margin-top: 8px;"></div>
+    </div>
+
     <div class="categories">
         <button class="cat-btn active" data-cat="lessons"><i class="fas fa-book-open"></i> Уроки</button>
         <button class="cat-btn" data-cat="tasks"><i class="fas fa-puzzle-piece"></i> Задачи</button>
         <button class="cat-btn" data-cat="games"><i class="fas fa-chess-board"></i> Партии</button>
         <button class="cat-btn" data-cat="reference"><i class="fas fa-graduation-cap"></i> Справочник</button>
     </div>
-    
-    <!-- Сетка материалов -->
+
     <div id="materialsGrid" class="materials-grid">
         <!-- динамическая загрузка -->
     </div>
-    
-    <!-- Панель преподавателя (видна только в режиме учителя) -->
+
     <div id="teacherPanel" class="teacher-panel" style="display: none;">
-        <h3><i class="fas fa-plus-circle"></i> Добавить новый материал</h3>
-        <input type="text" id="newTitle" placeholder="Название материала" style="width: 100%;">
+        <h3><i class="fas fa-plus-circle"></i> Добавить новый материал (синхр.)</h3>
+        <input type="text" id="newTitle" placeholder="Название">
         <select id="newCategory">
             <option value="lessons">Уроки</option>
             <option value="tasks">Задачи</option>
             <option value="games">Партии</option>
             <option value="reference">Справочник</option>
         </select>
-        <textarea id="newContent" rows="4" placeholder="Содержание: текст, PGN, FEN-позиция, описание партии..."></textarea>
-        <input type="text" id="newTags" placeholder="Теги (через запятую), например: мат, дебют, эндшпиль">
-        <button id="addMaterialBtn"><i class="fas fa-save"></i> Добавить материал</button>
-        <p id="teacherMsg" style="margin-top: 12px; color: green;"></p>
+        <textarea id="newContent" rows="4" placeholder="Содержание (текст, PGN, FEN)"></textarea>
+        <input type="text" id="newTags" placeholder="Теги через запятую">
+        <button id="addMaterialBtn">➕ Добавить материал</button>
+        <p id="teacherMsg"></p>
     </div>
-    
+
     <footer>
-        <i class="fas fa-lock"></i> Приватная библиотека — доступ только по ссылке. Преподаватель добавляет материалы.
+        <i class="fas fa-lock"></i> Приватная библиотека — синхронизация в реальном времени.
     </footer>
 </div>
 
-<!-- Модальное окно для просмотра -->
+<!-- Модальное окно -->
 <div id="materialModal" class="modal">
     <div class="modal-content">
         <h2 id="modalTitle"></h2>
         <div id="modalBody" class="material-full"></div>
         <div id="modalChessHint" class="chess-preview"></div>
-        <button onclick="closeModal()" style="margin-top: 16px;">Закрыть</button>
+        <button onclick="closeModal()">Закрыть</button>
     </div>
 </div>
 
 <script>
-    // ----------------------- ДАННЫЕ БИБЛИОТЕКИ -----------------------
-    let libraryData = JSON.parse(localStorage.getItem('chessLibraryV1')) || {
-        materials: [
-            { id: "1", category: "lessons", title: "Основы шахмат", content: "Шахматы — игра для двух игроков. Цель — поставить мат королю соперника. Доска 8×8, 16 фигур у каждого.\n\nНачальная расстановка: белые фигуры на 1-2 горизонталях, чёрные на 7-8.", tags: ["правила", "начало"] },
-            { id: "2", category: "tasks", title: "Мат в 1 ход", content: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", tags: ["мат", "тактика"] },
-            { id: "3", category: "games", title: "Опера в опере (Morphy vs Duke of Brunswick)", content: "1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d4 exd4 6.cxd4 Bb4+ 7.Bd2 Nxe4 8.Bxb4 Nxb4 9.Bxf7+ Kxf7 10.Qb3+ d5 11.Qxb4", tags: ["партия", "классика", "образец"] },
-            { id: "4", category: "reference", title: "Правила рокировки", content: "Рокировка — двойной ход королём и ладьёй. Нельзя если: король или ладья уже ходили, король под шахом, король проходит через битое поле, между ними есть фигуры.", tags: ["правила", "рокировка"] },
-            { id: "5", category: "lessons", title: "Дебютные принципы", content: "1. Захвати центр (e4, d4). 2. Развивай лёгкие фигуры (коней и слонов). 3. Рокируйся в безопасности. 4. Не выводи ферзя рано. 5. Связывай фигуры соперника.", tags: ["дебют", "стратегия"] },
-            { id: "6", category: "tasks", title: "Мат в 2 хода (ладья и король)", content: "8/8/8/8/8/3k4/8/K6R w - - 0 1", tags: ["мат", "эндшпиль"] }
-        ]
-    };
-    
+    // ---------- БИБЛИОТЕКА (синхронизируемая) ----------
+    let libraryData = { materials: [] };   // будет перезаписываться при синхронизации
     let currentCategory = "lessons";
-    let teacherMode = false;
-    
-    // Сохранение
-    function saveLibrary() {
-        localStorage.setItem('chessLibraryV1', JSON.stringify(libraryData));
-        renderMaterials();
-    }
-    
-    // Эскейп HTML
+    let teacherMode = false;   // видит ли пользователь панель добавления
+    let isHost = false;        // ведущий (преподаватель) – рассылает изменения
+    let peer = null;
+    let connections = [];       // для ведущего
+    let currentConn = null;    // для ученика
+    let myPeerId = null;
+
+    // Вспомогательные функции
     function escapeHtml(str) {
         if (!str) return '';
         return String(str).replace(/[&<>]/g, function(m) {
@@ -303,159 +158,275 @@
             return m;
         });
     }
-    
-    // Определяем, является ли содержимое FEN-позицией
+
     function isFEN(content) {
-        return content.length < 100 && content.includes('/') && (content.includes(' w ') || content.includes(' b ') || content.match(/[0-8]/));
+        return content.length < 100 && content.includes('/') && (content.includes(' w ') || content.includes(' b ') || /\d/.test(content));
     }
-    
-    // Отображение материалов
+
+    // Сохранить локально (не в localStorage, а в памяти – для ведущего)
+    function saveLibraryLocally() {
+        // Для ведущего синхронизация уже идёт через рассылку, здесь не нужно сохранять в localStorage
+        // Но чтобы не потерять при перезагрузке, можно сохранять у ведущего
+        if (isHost) {
+            localStorage.setItem('syncedLibrary', JSON.stringify(libraryData));
+        }
+        renderMaterials();
+    }
+
+    // Загрузить начальную библиотеку (для ведущего – из localStorage, для ученика – из памяти)
+    function loadInitialLibrary() {
+        if (isHost && !libraryData.materials.length) {
+            const saved = localStorage.getItem('syncedLibrary');
+            if (saved) {
+                libraryData = JSON.parse(saved);
+            } else {
+                // Начальные данные, если пусто
+                libraryData = { materials: [
+                    { id: "1", category: "lessons", title: "Основы шахмат", content: "Шахматы — игра...", tags: ["правила"] },
+                    { id: "2", category: "tasks", title: "Мат в 1 ход", content: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", tags: ["мат"] }
+                ] };
+            }
+        }
+        renderMaterials();
+    }
+
+    // Отправка всей библиотеки ученику (при подключении)
+    function sendFullLibrary(conn) {
+        conn.send({ type: 'fullLibrary', data: libraryData });
+    }
+
+    // Рассылка изменения (добавление, редактирование, удаление) всем ученикам
+    function broadcastUpdate(action, material) {
+        if (!isHost) return;
+        const message = { type: 'update', action: action, material: material };
+        connections.forEach(conn => {
+            if (conn.open) conn.send(message);
+        });
+    }
+
+    // Добавление материала ведущим
+    function addMaterial(title, category, content, tagsStr) {
+        if (!isHost) return;
+        const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
+        const newId = Date.now().toString();
+        const newMaterial = { id: newId, category, title, content, tags };
+        libraryData.materials.push(newMaterial);
+        saveLibraryLocally();
+        renderMaterials();
+        broadcastUpdate('add', newMaterial);
+    }
+
+    function editMaterial(id, newTitle, newContent, newTagsArr) {
+        if (!isHost) return;
+        const material = libraryData.materials.find(m => m.id === id);
+        if (material) {
+            material.title = newTitle;
+            material.content = newContent;
+            material.tags = newTagsArr;
+            saveLibraryLocally();
+            renderMaterials();
+            broadcastUpdate('edit', material);
+        }
+    }
+
+    function deleteMaterial(id) {
+        if (!isHost) return;
+        libraryData.materials = libraryData.materials.filter(m => m.id !== id);
+        saveLibraryLocally();
+        renderMaterials();
+        broadcastUpdate('delete', { id: id });
+    }
+
+    // Рендер материалов
     function renderMaterials() {
         const grid = document.getElementById('materialsGrid');
         const filtered = libraryData.materials.filter(m => m.category === currentCategory);
-        
-        if (filtered.length === 0) {
-            grid.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i> Нет материалов в этой категории.<br>${teacherMode ? 'Нажмите "Добавить материал" ниже.' : 'Преподаватель добавит материалы позже.'}</div>`;
+        if (!filtered.length) {
+            grid.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i> Нет материалов в этой категории.<br>${teacherMode ? 'Добавьте новый.' : 'Преподаватель добавит позже.'}</div>`;
             return;
         }
-        
         grid.innerHTML = '';
-        filtered.forEach(material => {
+        filtered.forEach(mat => {
+            let preview = mat.content.substring(0, 120);
+            if (mat.content.length > 120) preview += '...';
+            if (isFEN(mat.content)) preview = 'Шахматная позиция (FEN). Нажмите "Просмотр".';
             const card = document.createElement('div');
             card.className = 'material-card';
-            // Короткий превью
-            let preview = material.content.substring(0, 120);
-            if (material.content.length > 120) preview += '...';
-            if (isFEN(material.content)) preview = 'Шахматная позиция (FEN). Нажмите "Просмотр" для загрузки.';
-            
             card.innerHTML = `
-                <h3>${escapeHtml(material.title)}</h3>
+                <h3>${escapeHtml(mat.title)}</h3>
                 <div class="preview">${escapeHtml(preview)}</div>
-                <div class="tags">${material.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+                <div class="tags">${mat.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
                 <div class="card-actions">
-                    <button onclick="viewMaterial('${material.id}')">👁️ Просмотр</button>
-                    ${teacherMode ? `<button class="edit" onclick="editMaterial('${material.id}')">✏️ Редактировать</button><button class="delete" onclick="deleteMaterial('${material.id}')">🗑 Удалить</button>` : ''}
+                    <button onclick="viewMaterial('${mat.id}')">👁️ Просмотр</button>
+                    ${teacherMode && isHost ? `<button class="edit" onclick="editMaterialPrompt('${mat.id}')">✏️ Ред.</button><button class="delete" onclick="deleteMaterialPrompt('${mat.id}')">🗑 Удалить</button>` : ''}
                 </div>
             `;
             grid.appendChild(card);
         });
     }
-    
-    // Просмотр материала
+
     function viewMaterial(id) {
         const material = libraryData.materials.find(m => m.id === id);
         if (!material) return;
         document.getElementById('modalTitle').innerText = material.title;
-        
         let contentHtml = `<div style="white-space: pre-wrap;">${escapeHtml(material.content)}</div>`;
         let chessHint = '';
-        
         if (isFEN(material.content)) {
             chessHint = `<p><strong>🎯 FEN позиция:</strong> ${escapeHtml(material.content)}</p>
-                         <button onclick="copyFEN('${material.content}')">📋 Скопировать FEN</button>
-                         <p style="margin-top: 8px; font-size: 0.8rem;">Вставьте эту позицию на шахматную доску (например, в Lichess или в вашу доску на основном сайте).</p>`;
+                         <button onclick="copyFEN('${material.content.replace(/'/g, "\\'")}')">📋 Скопировать FEN</button>`;
         }
-        
         document.getElementById('modalBody').innerHTML = contentHtml;
         document.getElementById('modalChessHint').innerHTML = chessHint;
         document.getElementById('materialModal').style.display = 'flex';
     }
-    
+
     function copyFEN(fen) {
         navigator.clipboard.writeText(fen);
-        alert('FEN скопирован! Вставьте его в анализатор Lichess или на доску.');
+        alert('FEN скопирован!');
     }
-    
+
     function closeModal() {
         document.getElementById('materialModal').style.display = 'none';
     }
-    
-    // Добавление материала
-    function addMaterial(title, category, content, tagsStr) {
-        const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
-        const newId = Date.now().toString();
-        libraryData.materials.push({
-            id: newId,
-            category: category,
-            title: title,
-            content: content,
-            tags: tags
-        });
-        saveLibrary();
+
+    function editMaterialPrompt(id) {
+        const m = libraryData.materials.find(m => m.id === id);
+        if (!m) return;
+        const newTitle = prompt("Новое название:", m.title);
+        if (newTitle === null) return;
+        const newContent = prompt("Новое содержание:", m.content);
+        if (newContent === null) return;
+        const newTags = prompt("Теги (через запятую):", m.tags.join(', '));
+        const tagsArr = newTags ? newTags.split(',').map(t => t.trim()) : [];
+        editMaterial(id, newTitle, newContent, tagsArr);
     }
-    
-    function editMaterial(id) {
-        const material = libraryData.materials.find(m => m.id === id);
-        if (!material) return;
-        const newTitle = prompt("Название:", material.title);
-        if (newTitle) material.title = newTitle;
-        const newContent = prompt("Содержание:", material.content);
-        if (newContent) material.content = newContent;
-        const newTags = prompt("Теги (через запятую):", material.tags.join(', '));
-        if (newTags) material.tags = newTags.split(',').map(t => t.trim());
-        saveLibrary();
-    }
-    
-    function deleteMaterial(id) {
-        if (confirm("Удалить этот материал?")) {
-            libraryData.materials = libraryData.materials.filter(m => m.id !== id);
-            saveLibrary();
+
+    function deleteMaterialPrompt(id) {
+        if (confirm("Удалить материал?")) {
+            deleteMaterial(id);
         }
     }
-    
-    // ----------------------- РЕЖИМ ПРЕПОДАВАТЕЛЯ -----------------------
-    function enableTeacherMode() {
-        teacherMode = true;
-        document.getElementById('teacherStatus').innerHTML = '<i class="fas fa-user-graduate"></i> Режим преподавателя';
-        document.getElementById('teacherPanel').style.display = 'block';
-        document.getElementById('toggleTeacherBtn').innerHTML = '🚪 Выйти';
-        renderMaterials();
+
+    // ---------- PEERJS (синхронизация библиотеки) ----------
+    function initPeerAsHost() {
+        if (peer) peer.destroy();
+        peer = new Peer();
+        peer.on('open', (id) => {
+            myPeerId = id;
+            isHost = true;
+            document.getElementById('myPeerIdDisplay').innerHTML = `<strong>ID комнаты:</strong> <span class="room-info">${id}</span>`;
+            document.getElementById('connectionStatus').innerHTML = `Вы ведущий. Разошлите ID ${id} ученикам.`;
+            loadInitialLibrary(); // загрузить свои данные (или создать начальные)
+            peer.on('connection', (conn) => {
+                connections.push(conn);
+                // При подключении нового ученика отправляем ему всю библиотеку
+                conn.on('open', () => {
+                    sendFullLibrary(conn);
+                });
+                conn.on('data', (data) => {
+                    // Ученики могут отправлять что-то (не нужно для библиотеки)
+                });
+                conn.on('close', () => {
+                    connections = connections.filter(c => c !== conn);
+                });
+            });
+        });
+        peer.on('error', (err) => { console.error(err); alert('Ошибка PeerJS: ' + err); });
     }
-    
-    function disableTeacherMode() {
-        teacherMode = false;
-        document.getElementById('teacherStatus').innerHTML = '<i class="fas fa-eye"></i> Режим просмотра';
-        document.getElementById('teacherPanel').style.display = 'none';
-        document.getElementById('toggleTeacherBtn').innerHTML = '🔐 Войти';
-        renderMaterials();
+
+    function initPeerAsClient(roomId) {
+        if (peer) peer.destroy();
+        peer = new Peer();
+        peer.on('open', (id) => {
+            myPeerId = id;
+            const conn = peer.connect(roomId);
+            conn.on('open', () => {
+                currentConn = conn;
+                document.getElementById('connectionStatus').innerHTML = `✅ Подключено к преподавателю (комната ${roomId})`;
+                conn.on('data', (data) => {
+                    if (data.type === 'fullLibrary') {
+                        libraryData = data.data;
+                        renderMaterials();
+                        document.getElementById('connectionStatus').innerHTML += '<br>📚 Библиотека получена.';
+                    } else if (data.type === 'update') {
+                        // Обработка обновлений: add, edit, delete
+                        if (data.action === 'add') {
+                            libraryData.materials.push(data.material);
+                        } else if (data.action === 'edit') {
+                            const idx = libraryData.materials.findIndex(m => m.id === data.material.id);
+                            if (idx !== -1) libraryData.materials[idx] = data.material;
+                        } else if (data.action === 'delete') {
+                            libraryData.materials = libraryData.materials.filter(m => m.id !== data.material.id);
+                        }
+                        renderMaterials();
+                    }
+                });
+                conn.on('close', () => {
+                    document.getElementById('connectionStatus').innerHTML = 'Соединение разорвано';
+                });
+            });
+            conn.on('error', (err) => { alert('Ошибка подключения: ' + err); });
+        });
+        peer.on('error', (err) => { console.error(err); alert('Ошибка PeerJS: ' + err); });
     }
-    
-    document.getElementById('toggleTeacherBtn').addEventListener('click', () => {
-        if (!teacherMode) {
+
+    // Кнопки синхронизации
+    document.getElementById('becomeHostBtn').onclick = () => {
+        initPeerAsHost();
+        document.getElementById('becomeHostBtn').disabled = true;
+        document.getElementById('joinRoomBtn').disabled = true;
+    };
+    document.getElementById('joinRoomBtn').onclick = () => {
+        const roomId = document.getElementById('roomIdInput').value.trim();
+        if (!roomId) { alert('Введите ID комнаты'); return; }
+        initPeerAsClient(roomId);
+        document.getElementById('becomeHostBtn').disabled = true;
+        document.getElementById('joinRoomBtn').disabled = true;
+    };
+
+    // ---------- РЕЖИМ ПРЕПОДАВАТЕЛЯ (управление) ----------
+    let localTeacherMode = false;
+    document.getElementById('toggleTeacherBtn').onclick = () => {
+        if (!localTeacherMode) {
             const pwd = prompt("Введите пароль преподавателя:");
             if (pwd === 'chess123') {
-                enableTeacherMode();
-            } else {
-                alert("Неверный пароль");
-            }
+                localTeacherMode = true;
+                teacherMode = true;
+                document.getElementById('teacherStatus').innerHTML = '<i class="fas fa-user-graduate"></i> Режим преподавателя';
+                document.getElementById('teacherPanel').style.display = 'block';
+                document.getElementById('toggleTeacherBtn').innerHTML = '🚪 Выйти';
+                renderMaterials();
+            } else alert('Неверный пароль');
         } else {
-            disableTeacherMode();
+            localTeacherMode = false;
+            teacherMode = false;
+            document.getElementById('teacherStatus').innerHTML = '<i class="fas fa-eye"></i> Режим просмотра';
+            document.getElementById('teacherPanel').style.display = 'none';
+            document.getElementById('toggleTeacherBtn').innerHTML = '🔐 Войти';
+            renderMaterials();
         }
-    });
-    
-    // Добавление материала через форму
-    document.getElementById('addMaterialBtn').addEventListener('click', () => {
-        if (!teacherMode) {
-            alert("Только для преподавателя");
+    };
+
+    // Добавление материала из панели
+    document.getElementById('addMaterialBtn').onclick = () => {
+        if (!localTeacherMode || !isHost) {
+            alert("Только преподаватель в режиме ведущего может добавлять материалы. Сначала нажмите «Стать ведущим».");
             return;
         }
         const title = document.getElementById('newTitle').value.trim();
         const category = document.getElementById('newCategory').value;
         const content = document.getElementById('newContent').value.trim();
         const tags = document.getElementById('newTags').value;
-        if (!title || !content) {
-            alert("Заполните название и содержание");
-            return;
-        }
+        if (!title || !content) { alert("Заполните название и содержание"); return; }
         addMaterial(title, category, content, tags);
         document.getElementById('newTitle').value = '';
         document.getElementById('newContent').value = '';
         document.getElementById('newTags').value = '';
-        document.getElementById('teacherMsg').innerHTML = '✅ Материал добавлен!';
+        document.getElementById('teacherMsg').innerHTML = '✅ Материал добавлен и отправлен ученикам!';
         setTimeout(() => document.getElementById('teacherMsg').innerHTML = '', 2000);
-    });
-    
-    // Переключение категорий
+    };
+
+    // Категории
     const catBtns = document.querySelectorAll('.cat-btn');
     catBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -465,14 +436,15 @@
             renderMaterials();
         });
     });
-    
-    // Закрытие модалки по клику вне
+
+    // Закрытие модалки
     window.onclick = function(event) {
         const modal = document.getElementById('materialModal');
         if (event.target === modal) closeModal();
     };
-    
-    // Инициализация
+
+    // Инициализация (без синхронизации по умолчанию – просто пустая библиотека, ждём ведущего)
+    libraryData = { materials: [] };
     renderMaterials();
 </script>
 </body>
